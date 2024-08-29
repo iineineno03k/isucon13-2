@@ -13,11 +13,13 @@ import (
 	"os/exec"
 	"runtime"
 	"strconv"
+	"time"
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/patrickmn/go-cache"
 
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
@@ -40,6 +42,8 @@ func init() {
 	if secretKey, ok := os.LookupEnv("ISUCON13_SESSION_SECRETKEY"); ok {
 		secret = []byte(secretKey)
 	}
+	//最初にキャッシュの設定をする
+	userCache = cache.New(5*time.Minute, 10*time.Minute)
 }
 
 type InitializeResponse struct {

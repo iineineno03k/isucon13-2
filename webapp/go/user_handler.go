@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -17,6 +18,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
+	"github.com/patrickmn/go-cache"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -84,6 +86,10 @@ type PostIconRequest struct {
 type PostIconResponse struct {
 	ID int64 `json:"id"`
 }
+
+var (
+	userCache *cache.Cache
+)
 
 func getIconHandler(c echo.Context) error {
 	ctx := c.Request().Context()
@@ -399,6 +405,13 @@ func verifyUserSession(c echo.Context) error {
 }
 
 func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (User, error) {
+	//ユーザーをキャッシュから取得
+	val, found := userCache.Get(strconv.FormatInt(userModel.ID, 10))
+	//取得できたらキャッシュの内容を返す
+	if found {
+		return val.(User), nil
+	}
+
 	themeModel := ThemeModel{}
 	if err := tx.GetContext(ctx, &themeModel, "SELECT * FROM themes WHERE user_id = ?", userModel.ID); err != nil {
 		return User{}, err
@@ -427,6 +440,8 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 		},
 		IconHash: fmt.Sprintf("%x", iconHash),
 	}
+	//取得したUserをキャッシュする
+	userCache.Set(strconv.FormatInt(user.ID, 10), user, cache.DefaultExpiration)
 
 	return user, nil
 }
