@@ -154,6 +154,9 @@ func postIconHandler(c echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to insert new user icon: "+err.Error())
 	}
+	//"messages":["整合性チェックに失敗しました","新たに設定したアイコンのハッシュ値がicon_hashに反映されていません"]
+	//上記メッセージがでたので暫定対処。
+	userCache.Delete(strconv.FormatInt(userID, 10))
 
 	iconID, err := rs.LastInsertId()
 	if err != nil {
