@@ -505,7 +505,7 @@ func fillLivestreamResponse(ctx context.Context, tx *sqlx.Tx, livestreamModel Li
 		tagIDs = append(tagIDs, model.TagID)
 	}
 
-	var tags []Tag
+	tags := make([]Tag, len(livestreamTagModels))
 	if len(tagIDs) > 0 {
 		// タグを取得
 		var tagModels []TagModel
